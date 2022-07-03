@@ -49,7 +49,7 @@ RUN setcap "cap_net_bind_service=+ep" /usr/bin/php7.4
 
 COPY php.ini /etc/php/7.4/cli/conf.d/99-php.ini
 COPY php.ini /etc/php/7.4/apache2/conf.d/99-php.ini
-COPY default.conf /etc/apache2/sites-availavle/000-default.conf
+COPY default.conf /etc/apache2/sites-available/000-default.conf
 
 RUN groupmod -g $WWWGROUP www-data && usermod -u $WWWUSER www-data
 
