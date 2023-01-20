@@ -18,11 +18,11 @@ RUN apt-get update \
     && curl -sS 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x14aa40ec0831756756d7f66c4f4ea0aae5267a6c' | gpg --dearmor | tee /usr/share/keyrings/ppa_ondrej_php.gpg > /dev/null \
     && echo "deb [signed-by=/usr/share/keyrings/ppa_ondrej_php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu jammy main" > /etc/apt/sources.list.d/ppa_ondrej_php.list \
     && apt-get update \
-    && apt-get install -y php7.4 php7.4-dev \
+    && apt-get install -y php7.4-fpm php7.4-cli php7.4-dev \
     php7.4-sqlite3 php7.4-gd \
     php7.4-curl php7.4-memcached \
-    php7.4-imap php7.4-mysql php7.4-mbstring \
-    php7.4-xml php7.4-zip php7.4-bcmath php7.4-soap \
+    php7.4-imap php7.4-mysql php7.4-mbstring php7.4-opcache \
+    php7.4-xml php7.4-json php7.4-zip php7.4-bcmath php7.4-soap \
     php7.4-intl php7.4-readline php7.4-pcov \
     php7.4-msgpack php7.4-igbinary php7.4-ldap \
     && php -r "readfile('https://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer \
@@ -32,25 +32,22 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y mysql-client
 
-RUN apt-get update \
-    && apt-get install -y apache2
-
 RUN apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php7.4
 
-# Copy and update root CA
-COPY ca-certificates/* /usr/local/share/ca-certificates/
-RUN update-ca-certificates
-
-COPY php.ini /etc/php/7.4/cli/conf.d/99-php.ini
-COPY php.ini /etc/php/7.4/apache2/conf.d/99-php.ini
-COPY default.conf /etc/apache2/sites-available/000-default.conf
-
 RUN groupmod -g $WWWGROUP www-data && usermod -u $WWWUSER www-data
 
-EXPOSE 80 443
+STOPSIGNAL SIGQUIT
 
-CMD apachectl -D FOREGROUND
+COPY overrides.conf /etc/php/7.4/fpm/pool.d/z-overrides.conf
+COPY php.ini /etc/php/7.4/fpm/conf.d/90-php.ini
+COPY php.ini /etc/php/7.4/cli/conf.d/90-php.ini
+
+WORKDIR "/var/www"
+
+CMD ["/usr/sbin/php-fpm7.4", "-O" ]
+
+EXPOSE 9000
