@@ -1,4 +1,3 @@
-# For more information: https://laravel.com/docs/sail
 version: '3'
 services:
   php:
@@ -16,7 +15,8 @@ services:
       - './www:/var/www'
       - './docker/logs/php:/var/log/php'
     networks:
-      - bitrix
+      - bitrix-internal
+#      - bitrix-external
   nginx:
     build:
       context: ./docker/nginx
@@ -33,7 +33,8 @@ services:
       - './www:/var/www'
       - './docker/logs/nginx:/var/log/nginx'
     networks:
-      - bitrix
+      - bitrix-internal
+      - bitrix-external
   mysql:
     image: 'mysql/mysql-server:8.0'
     ports:
@@ -49,7 +50,8 @@ services:
       - 'db-mysql:/var/lib/mysql'
       - './docker/mysql/my.cnf:/etc/mysql/my.cnf'
     networks:
-      - bitrix
+      - bitrix-internal
+      - bitrix-external
     healthcheck:
       test: [ 'CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}' ]
       retries: 3
@@ -60,5 +62,9 @@ volumes:
     driver: local
 
 networks:
-  bitrix:
+  bitrix-internal:
     driver: bridge
+    internal: true
+  bitrix-external:
+    driver: bridge
+
